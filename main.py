@@ -124,7 +124,7 @@ with st.expander("🗺️ Análise Geográfica por Município", expanded=True):
         st.error("Arquivo `geojson_es.json` não encontrado!")
 
 # Expander para a Análise Temporal
-with st.expander(f"📈 Análise Temporal por {agregacao}", expanded=False):
+with st.expander(f"📈 Análise Temporal por {agregacao}", expanded=True):
     df_temporal = df_filtrado.set_index('DT_ATENDIMENTO')
     if agregacao == 'Dia':
         dados_agrupados = df_temporal.resample('D').size().reset_index(name='Nº de Atendimentos')
@@ -136,3 +136,4 @@ with st.expander(f"📈 Análise Temporal por {agregacao}", expanded=False):
     fig_linha = px.line(dados_agrupados, x='Período', y='Nº de Atendimentos', title=f'Atendimentos por {agregacao}')
     fig_linha.update_layout(xaxis_title='Período', yaxis_title='Número de Atendimentos')
     st.plotly_chart(fig_linha, use_container_width=True)
+
