@@ -8,7 +8,7 @@ import unicodedata
 st.set_page_config(layout="wide")
 
 # Título do Dashboard
-st.title('Dashboard de Gestão Epidemiológica')
+st.title('Dashboard de Gestão Epidemiológica do Hospital Santa Rita de Cássia do período de 01/01/2024 a 31/07/2025')
 
 # Injeção de CSS para corrigir a rolagem no Chrome
 st.markdown('<style>div.block-container{padding-top:2rem;}</style>', unsafe_allow_html=True)
@@ -167,3 +167,4 @@ with st.expander(f"📈 Análise Temporal por {agregacao}", expanded=True):
     fig_linha = px.line(dados_agrupados, x='Período', y='Nº de Atendimentos', title=f'Atendimentos por {agregacao}')
     fig_linha.update_layout(xaxis_title='Período', yaxis_title='Número de Atendimentos')
     st.plotly_chart(fig_linha, use_container_width=True)
+
