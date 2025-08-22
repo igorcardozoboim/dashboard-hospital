@@ -10,6 +10,9 @@ st.set_page_config(layout="wide")
 # Título do Dashboard
 st.title('Dashboard de Gestão Epidemiológica')
 
+# Injeção de CSS para corrigir a rolagem no Chrome
+st.markdown('<style>div.block-container{padding-top:2rem;}</style>', unsafe_allow_html=True)
+
 # --- Carregamento e Preparação dos Dados ---
 @st.cache_data
 def carregar_dados():
@@ -34,7 +37,6 @@ if st.sidebar.button('Limpar Cache e Recarregar Dados'):
     st.cache_data.clear()
     st.rerun()
 
-# ... (resto da barra lateral continua igual) ...
 cid_counts = df['DESCRICAO_CID'].value_counts()
 cids_relevantes = cid_counts[cid_counts >= 1000].index.tolist()
 cids_selecionados = st.sidebar.multiselect(
@@ -62,17 +64,47 @@ else:
     df_filtrado = df.copy()
 df_filtrado = df_filtrado.dropna(subset=['DT_ATENDIMENTO'])
 
-# --- KPIs ---
+# --- KPIs e Novo Gráfico de Pizza ---
 st.markdown("---")
 st.subheader("Resumo do Período e Filtros Selecionados")
+
+# --- MODIFICAÇÃO: Layout alterado para 4 colunas ---
+col1, col2, col3, col4 = st.columns(4)
+
+# Coluna 1: Total de Atendimentos
 total_atendimentos = len(df_filtrado)
-pacientes_unicos = df_filtrado['CD_PACIENTE'].nunique()
-media_idade = int(df_filtrado['IDADE'].mean()) if not df_filtrado.empty else 0
-col1, col2, col3 = st.columns(3)
 col1.metric("Total de Atendimentos", f"{total_atendimentos:,}".replace(",", "."))
+
+# Coluna 2: Pacientes Únicos
+pacientes_unicos = df_filtrado['CD_PACIENTE'].nunique()
 col2.metric("Nº de Pacientes Únicos", f"{pacientes_unicos:,}".replace(",", "."))
+
+# Coluna 3: Média de Idade
+media_idade = int(df_filtrado['IDADE'].mean()) if not df_filtrado.empty else 0
 col3.metric("Média de Idade dos Pacientes", f"{media_idade} anos")
+
+# Coluna 4 com o novo gráfico de pizza
+with col4:
+    if not df_filtrado.empty:
+        sexo_counts = df_filtrado['SEXO'].value_counts()
+        fig_sexo = px.pie(
+            sexo_counts,
+            values=sexo_counts.values,
+            names=sexo_counts.index,
+            color_discrete_sequence=["#B9A6FF", "#4038A8"] # Rosa e Azul
+        )
+        # Ajustes para deixar o gráfico mais compacto
+        fig_sexo.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0),
+            showlegend=False,
+            height=200 # Define uma altura menor
+        )
+        # Adiciona os percentuais dentro das fatias
+        fig_sexo.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig_sexo, use_container_width=True)
+
 st.markdown("---")
+
 
 # --- Análise de Recursos e Demanda ---
 st.subheader("Análise de Recursos e Demanda")
@@ -91,7 +123,7 @@ with col_conv:
     st.plotly_chart(fig_conv, use_container_width=True)
 st.markdown("---")
 
-# --- MODIFICAÇÃO: Usando Expanders para organizar os gráficos grandes ---
+# --- Análise Epidemiológica Detalhada ---
 st.subheader('Análise Epidemiológica Detalhada')
 
 # Expander para o Mapa Geográfico
@@ -123,7 +155,6 @@ with st.expander("🗺️ Análise Geográfica por Município", expanded=True):
     else:
         st.error("Arquivo `geojson_es.json` não encontrado!")
 
-# Expander para a Análise Temporal
 with st.expander(f"📈 Análise Temporal por {agregacao}", expanded=True):
     df_temporal = df_filtrado.set_index('DT_ATENDIMENTO')
     if agregacao == 'Dia':
@@ -136,4 +167,3 @@ with st.expander(f"📈 Análise Temporal por {agregacao}", expanded=True):
     fig_linha = px.line(dados_agrupados, x='Período', y='Nº de Atendimentos', title=f'Atendimentos por {agregacao}')
     fig_linha.update_layout(xaxis_title='Período', yaxis_title='Número de Atendimentos')
     st.plotly_chart(fig_linha, use_container_width=True)
-
