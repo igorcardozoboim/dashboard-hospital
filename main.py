@@ -31,23 +31,22 @@ st.markdown('<style>div.block-container{padding-top:2rem;}</style>', unsafe_allo
 # --- Carregamento e Preparação dos Dados ---
 
 @st.cache_data
-
 def carregar_dados():
+    try:
+        df = pd.read_csv('epidemio_2024_2025_compacta.zip', encoding='utf-8', delimiter=';')
+    except (UnicodeDecodeError, pd.errors.ParserError):
+        df = pd.read_csv('epidemio_2024_2025_compacta.zip', encoding='latin1', delimiter=';')
+    except FileNotFoundError:
+        st.error("Arquivo 'epidemio_2024_2025_compacta.zip' não encontrado.")
+        return pd.DataFrame()
 
-    try:
-
-        df = pd.read_csv('epidemio_2024_2025_compacta.zip', encoding='utf-8', delimiter=';')
-
-    except (UnicodeDecodeError, pd.errors.ParserError):
-
-        df = pd.read_csv('epidemio_2024_2025_compacta.zip', encoding='latin1', delimiter=';')
-
-    except FileNotFoundError:
-
-        st.error("Arquivo 'epidemio_2024_2025_compacta.zip' não encontrado.")
-
-        return pd.DataFrame()
-
+    date_series = df['DT_ATENDIMENTO'].astype(str).str.split().str[0]
+    df['DT_ATENDIMENTO'] = pd.to_datetime(date_series, format='%d/%m/%Y', errors='coerce')
+    
+    if 'SEXO' in df.columns:
+        df['SEXO'] = df['SEXO'].astype(str)
+    
+    return df
 
 
     date_series = df['DT_ATENDIMENTO'].astype(str).str.split().str[0]
@@ -335,3 +334,4 @@ with st.expander(f"📈 Análise Temporal por {agregacao}", expanded=True):
     fig_linha.update_layout(xaxis_title='Período', yaxis_title='Número de Atendimentos')
 
     st.plotly_chart(fig_linha, use_container_width=True)
+
